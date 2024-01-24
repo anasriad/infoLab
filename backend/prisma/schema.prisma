@@ -1,0 +1,76 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  UserID           String     @unique
+  Email            String     @id @unique
+  FirstName        String
+  LastName         String
+  PhoneNumber      String
+  Password         String
+  Role             String
+  CoursesAsTeacher Course[]   @relation("TeacherCourses")
+  CoursesAsStudent Course[]   @relation("StudentCourses")
+  Grades           Grade[]
+  Feedback         Feedback[]
+  ProfilePicture   String
+  Test             Test[]
+}
+
+model Test {
+  TestID    Int         @id @default(autoincrement())
+  Name      String
+  Grade     Grade[]
+  PassedAt  DateTime    @default(now())
+  GradedAt  DateTime    @updatedAt
+  CourseID  String      @default("")
+  Course    Course      @relation(fields: [CourseID], references: [CourseID], onDelete: SetDefault, onUpdate: Cascade)
+  UserID    String
+  User      User        @relation(fields: [UserID], references: [Email])
+  Questions Questions[]
+}
+
+model Course {
+  CourseID    String @id
+  Name        String
+  Field       String
+  Description String
+  Enrollers   Int
+  Teacher     User   @relation("TeacherCourses", fields: [TeacherID], references: [Email], onUpdate: Cascade, onDelete: SetDefault)
+  TeacherID   String
+  Students    User[] @relation("StudentCourses")
+  Tests       Test[]
+}
+
+model Questions {
+  QuestionID String @id
+  Question   String
+  Answer     String
+  Points     Float
+  Test       Int    @default(0)
+  test       Test   @relation(fields: [Test], references: [TestID], onDelete: SetDefault, onUpdate: Cascade)
+}
+
+model Feedback {
+  FeedBackID Int      @id @default(autoincrement())
+  Rate       Float
+  Comment    String
+  CreatedAt  DateTime @default(now())
+  UserID     String
+  User       User     @relation(fields: [UserID], references: [Email], onDelete: Cascade, onUpdate: Cascade)
+}
+
+model Grade {
+  GradeID Int    @id @unique
+  grade   Float
+  Test    Int
+  test    Test   @relation(fields: [Test], references: [TestID])
+  Student String
+  user    User   @relation(fields: [Student], references: [UserID])
+}
